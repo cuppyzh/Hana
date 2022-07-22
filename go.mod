@@ -1,11 +1,16 @@
-module cuppyzh/hana
+module github.com/cuppyzh/hana
 
 go 1.18
 
+replace github.com/cuppyzh/Go-Diako => ../Go-Diako
+
 require (
-	github.com/cuppyzh/Go-Diako v0.0.3-0.20220722040245-e79364ca8b6c // indirect
+	github.com/cuppyzh/Go-Diako v0.0.0-00010101000000-000000000000
+	github.com/gin-gonic/gin v1.8.1
+)
+
+require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
