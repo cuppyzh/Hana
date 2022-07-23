@@ -61,16 +61,14 @@ func setupBaseDiscordBot() {
 
 func sendMessageToFcChannel(sender string, message string) {
 
-	_, err := Discord.ChannelMessageSend(os.Getenv("DISCORD_CHANNEL_ID"), message)
+	discordMessage := "***" + sender + "***: " + message
+	_, err := Discord.ChannelMessageSend(os.Getenv("DISCORD_CHANNEL_ID"), discordMessage)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 var eventHandler = func(e event.Event) error {
-	fmt.Printf("handle event: %s\n", e.Name())
-	fmt.Printf("property: %s\n", e.Data()["Sender"])
-	fmt.Printf("property: %s\n", e.Data()["Message"])
 	sendMessageToFcChannel(fmt.Sprintf("%v", e.Data()["Sender"]), fmt.Sprintf("%v", e.Data()["Message"]))
 	return nil
 }
