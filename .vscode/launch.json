@@ -5,9 +5,16 @@
         "name": "Launch",
         "type": "go",
         "request": "launch", 
+        "mode": "debug",
+        "program": "${workspaceFolder}",
+        "args": [], 
+        "showLog": true,
         "env": {
-          "DIAKO_AUTH_USERNAME":"Cuppyzh",
-          "DIAKO_AUTH_PASSWORD":"asdasd"
+          "DIAKO_AUTH_USERNAME":"",
+          "DIAKO_AUTH_PASSWORD":"",
+          "BOT_TOKEN":"",
+          "DISCORD_SERVER_ID":"",
+          "DISCORD_CHANNEL_ID":""
         }
       }
     ]
