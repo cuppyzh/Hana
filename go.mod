@@ -9,6 +9,8 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 )
 
+require github.com/ahmetb/go-linq/v3 v3.2.0 // indirect
+
 require (
 	github.com/bwmarrin/discordgo v0.25.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
