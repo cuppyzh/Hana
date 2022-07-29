@@ -1,41 +1,78 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/bwmarrin/discordgo"
+	diako "github.com/cuppyzh/Go-Diako"
 	"github.com/gin-gonic/gin"
+	"github.com/gookit/event"
+	"github.com/joho/godotenv"
 )
 
+var Discord *discordgo.Session
+
 func main() {
-	router := setupRouter()
-	router.Run(":9008")
+	godotenv.Load()
+	setupEventListener()
+	setupWebApi()
+	setupBaseDiscordBot()
+
 }
 
-func setupRouter() *gin.Engine {
+func setupWebApi() {
 	router := gin.Default()
+	diako.SetupRouter(router)
 
-	// Ping test API
-	router.GET("/api/test/ping", func(context *gin.Context) {
-		context.String(http.StatusOK, "pong")
-	})
-
-	// Diako
-	router.POST("/api/diako/message", func(context *gin.Context) {
-		var request MessageRequest
-
-		if err := context.ShouldBindJSON(&request); err != nil {
-			context.JSON(http.StatusBadRequest, errorResponse(err))
-			return
-		}
-
-		log.Println("Test: " + request.Sender)
-		context.String(http.StatusOK, "")
-	})
-
-	return router
+	go router.Run(":9008")
 }
 
-func errorResponse(err error) gin.H {
-	return gin.H{"error": err.Error()}
+func setupBaseDiscordBot() {
+	log.Println("Setting up Discord bot")
+
+	token := os.Getenv("BOT_TOKEN")
+
+	discord, err := discordgo.New("Bot " + token)
+
+	if err != nil {
+		panic(err)
+	}
+
+	// In this example, we only care about receiving message events.
+	discord.Identify.Intents = discordgo.IntentsGuildMessages
+
+	err = discord.Open()
+	if err != nil {
+		panic(err)
+	}
+
+	Discord = discord
+
+	// Wait here until CTRL-C or other term signal is received.
+	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-sc
+}
+
+func sendMessageToFcChannel(sender string, message string) {
+
+	discordMessage := "***" + sender + "***: " + message
+	_, err := Discord.ChannelMessageSend(os.Getenv("DISCORD_CHANNEL_ID"), discordMessage)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+var eventHandler = func(e event.Event) error {
+	sendMessageToFcChannel(fmt.Sprintf("%v", e.Data()["Sender"]), fmt.Sprintf("%v", e.Data()["Message"]))
+	return nil
+}
+
+func setupEventListener() {
+	event.On("diako.message.recieved", event.ListenerFunc(eventHandler), event.High)
 }
