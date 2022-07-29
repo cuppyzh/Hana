@@ -2,17 +2,15 @@ module github.com/cuppyzh/hana
 
 go 1.18
 
-replace github.com/cuppyzh/Go-Diako => ../Go-Diako
-
 require (
-	github.com/cuppyzh/Go-Diako v0.0.2
+	github.com/cuppyzh/Go-Diako v1.0.0
 	github.com/gin-gonic/gin v1.8.1
 )
 
 require github.com/ahmetb/go-linq/v3 v3.2.0 // indirect
 
 require (
-	github.com/bwmarrin/discordgo v0.25.0 // indirect
+	github.com/bwmarrin/discordgo v0.25.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
