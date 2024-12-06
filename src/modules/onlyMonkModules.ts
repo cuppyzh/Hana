@@ -1,6 +1,6 @@
 import { DB, Embed, EmbedField, v4 } from "../deps.ts"
 
-export const db = new DB("./data/onlymonk/minecraft.coordinates.sqlite");
+export const db = new DB("/app/data/minecraft.coordinates.sqlite");
 
 export function init() {
     db.query(`CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`)
