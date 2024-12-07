@@ -16,11 +16,13 @@ class TagBot extends Client {
   @event()
   ready() {
     console.log(`Logged in as ${this.user?.tag}!`);
+
     onlyMonkCommands.forEach((cmd) => {
-      this.slash.commands.create(cmd, Deno.env.get("SERVER_ID"))
+      this.slash.commands.create(cmd, Deno.env.get("ONLY_MONK_DISCORD_SERVER_ID"))
         .then((c) => console.log(`Created Slash Command ${cmd.name}!`))
         .catch(() => console.log(`Failed to create ${cmd.name} command!`));
     });
+
   }
 
   @slash()
@@ -73,5 +75,11 @@ class TagBot extends Client {
   }
 }
 
+
+// void main(string[] args)
+onlyMonkModules.InitDatabase();
+
 const bot = new TagBot();
-bot.connect(Deno.env.get("BOT_TOKEN"), Intents.None);
+bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None);
+
+onlyMonkModules.getGameServerStatus()

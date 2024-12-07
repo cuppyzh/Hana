@@ -1,0 +1,8 @@
+{
+    "Minecraft":{
+        "ApiPaths":{
+            "Status":"/api/status",
+            "Player":"/api/player"
+        }
+    }
+}

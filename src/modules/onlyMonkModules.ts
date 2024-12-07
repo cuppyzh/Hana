@@ -1,12 +1,12 @@
-import { DB, Embed, EmbedField, v4 } from "../deps.ts"
+import { DB, Embed, EmbedField, v4, serve, readJson } from "../deps.ts"
 
-export const db = new DB("/app/data/minecraft.coordinates.sqlite");
+const config = await readJson("./OnlyMonkConfig.json");
 
-export function init() {
+export const db = new DB(Deno.env.get("DATA_PATH")+"minecraft.coordinates.sqlite");
+
+export function InitDatabase() {
     db.query(`CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`)
 }
-
-init();
 
 export function getInfo(){
     const embed = new Embed()
@@ -20,7 +20,7 @@ export function getInfo(){
 
     embed.addField({
         name: "Hostname",
-        value: `(Ucup) Playit.gg: ${Deno.env.get("HOSTNAME_UCUP_PLAYIT")}\n(Ucup) Hamachi: ${Deno.env.get("HOSTNAME_UCUP_HAMACHI")}`
+        value: `Playit.gg: ${Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_ADDRESS")}}`
     })
 
     return [embed]
@@ -63,7 +63,43 @@ export function addCoordinate(name: string, coordinate: string, submitted_by: st
 
 /* Private Methods */
 
+function getBaseEmbedMessageResponse(){
+    
+    return new Embed()
+        .setTitle("Only Monk Minecraft")
+        .setColor("#237feb"); 
+}
+
 function addCoordinateToDb(name: string, coordinate: string, submitted_by: string){
     const id = v4.generate();
     db.query('INSERT INTO onlymonk_minecraft_coordinates (id, name, coordinate, submit_by) VALUES (?, ?, ?, ?)',[id, name, coordinate, submitted_by])
+}
+
+export function getGameServerStatus(){
+    throw new Error(`Not Implemented Exception`);
+
+    var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") + config.Minecraft.ApiPaths.Status;
+
+    console.log(endpoint)
+    var response = getApiStatus(endpoint)
+
+    console.log(response)
+}
+
+function getGameApiStatus(){
+    throw new Error(`Not Implemented Exception`);
+}
+
+async function getApiStatus(url: string): Promise<void> { 
+    try { 
+        const response = await fetch(url); 
+        if (!response.ok) { 
+            throw new Error(`HTTP error! status: ${response.status}`); 
+        } 
+        
+        const data = await response.json(); 
+        console.log("API Status:", data.status); 
+    } catch (error) { 
+        console.error("Error fetching API status:", error);
+     } 
 }
