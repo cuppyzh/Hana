@@ -1,0 +1,8 @@
+{
+    "Minecraft":{
+        "ApiPaths":{
+            "Server":"/v1/server",
+            "Players":"/v1/players"
+        }
+    }
+}

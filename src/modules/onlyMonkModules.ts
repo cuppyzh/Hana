@@ -1,69 +1,229 @@
-import { DB, Embed, EmbedField, v4 } from "../deps.ts"
+import { DB, Embed, EmbedField, readJson, serve, v4 } from "../deps.ts";
 
-export const db = new DB("/app/data/minecraft.coordinates.sqlite");
+const config = await readJson("./OnlyMonkConfig.json");
 
-export function init() {
-    db.query(`CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`)
+const headers = new Headers();
+const apiKey = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_KEY")
+    ?.toString();
+const apiKeyValue: string = apiKey ?? "defaultApiKey";
+headers.append("key", apiKeyValue);
+
+const db = new DB(
+    Deno.env.get("ONLY_MONK_MINECRAFT_DATA_PATH") +
+        "minecraft.coordinates.sqlite",
+);
+
+export function InitDatabase() {
+    db.query(
+        `CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`,
+    );
 }
 
-init();
-
-export function getInfo(){
-    const embed = new Embed()
-        .setTitle("Only Monk Minecraft --- Everlasting")
-        .setColor("#237feb");
+export function getInfo() {
+    const embed = getBaseEmbedMessageResponse();
 
     embed.addField({
         name: "Server Status",
-        value: "Game Server Status: Online\nAPI Status: Offline"
-    })
+        value: "Game Server Status: " + isGameServerOnline()
+            ? "🟢 Online"
+            : "❌ Offline",
+    });
 
     embed.addField({
         name: "Hostname",
-        value: `(Ucup) Playit.gg: ${Deno.env.get("HOSTNAME_UCUP_PLAYIT")}\n(Ucup) Hamachi: ${Deno.env.get("HOSTNAME_UCUP_HAMACHI")}`
+        value: `${Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_ADDRESS")}}`,
+    });
+
+    return [embed];
+}
+
+export async function getOnlinePlayerStatus() {
+    const embed = getBaseEmbedMessageResponse();
+    const currentOnlinePlayers = await whoOnline();
+
+    if (currentOnlinePlayers.length == 0){
+        embed.addField({
+            name:"No player online right now.",
+            value:""
+        });
+
+        return [embed];
+    }
+    
+    embed.addField({
+        name: "Current player online",
+        value: `${currentOnlinePlayers.join("\n")}`
     })
 
     return [embed]
 }
 
 export function getCoordinates() {
-    const coordinates = [...db.query(`SELECT * FROM onlymonk_minecraft_coordinates`, [])]
+    const coordinates = [
+        ...db.query(`SELECT * FROM onlymonk_minecraft_coordinates`, []),
+    ];
 
-    const embed = new Embed()
-        .setTitle("Only Monk Minecraft --- Everlasting")
-        .setColor("#237feb");
+    const embed = getBaseEmbedMessageResponse();
 
-    let description = ""
+    if (coordinates.length == 0) {
+        embed.addField({
+            name: "List of coordinates",
+            value: "No record of coordinate.",
+        });
+        return [embed];
+    }
+
+    let indexFieldValue = "", nameFieldValue = "", coordinateFieldValue = "";
 
     let index = 1;
-    for(const [id, name, coordinate] of coordinates){
-        description += `${index}. ${name}:${coordinate}`+"\n"
-        index++
+    for (const [id, name, coordinate] of coordinates) {
+        indexFieldValue += "\n" + index;
+        nameFieldValue += "\n" + name;
+        coordinateFieldValue += "\n" + coordinate;
+        index++;
     }
 
     embed.addField({
-        name: "List of coordinates!",
-        value: description
-    })
+        name: "List of coordinates",
+        value: "",
+    });
 
-    return [embed]
+    embed.addField({
+        name: "Index",
+        value: indexFieldValue,
+        inline: true,
+    });
 
+    embed.addField({
+        name: "Name",
+        value: nameFieldValue,
+        inline: true,
+    });
+
+    embed.addField({
+        name: "Coordinate",
+        value: coordinateFieldValue,
+        inline: true,
+    });
+
+    return [embed];
 }
 
-export function addCoordinate(name: string, coordinate: string, submitted_by: string){
-    addCoordinateToDb(name, coordinate, submitted_by)
+export function addCoordinate(
+    name: string,
+    coordinate: string,
+    submitted_by: string,
+) {
+    addCoordinateToDb(name, coordinate, submitted_by);
 
-    const embed = new Embed()
-        .setTitle("Only Monk Minecraft --- Everlasting")
-        .setDescription("**Coordinate has been submitted! **")
-        .setColor("#237feb");
+    const embed = getBaseEmbedMessageResponse()
+        .setDescription("**Coordinate has been submitted! **");
 
-    return [embed]
+    return [embed];
+}
+
+export function deleteCoordinate(index: number) {
+    const embed = getBaseEmbedMessageResponse();
+
+    const rowId = getCoordinateByIndex(index) as string;
+
+    if (rowId == null) {
+        return [
+            embed.setDescription(
+                "**Coordinate with such index is not exists.**",
+            ),
+        ];
+    }
+
+    deleteCoordinateToDbById(rowId);
+    return [embed.setDescription("**Coordinate has been deleted! **")];
 }
 
 /* Private Methods */
+function getCoordinateByIndex(index: number) {
+    const [row] = db.query(
+        "SELECT ID FROM onlymonk_minecraft_coordinates LIMIT 1 OFFSET ?",
+        [index - 1],
+    );
 
-function addCoordinateToDb(name: string, coordinate: string, submitted_by: string){
+    if (row == null || row.length == 0) {
+        return null;
+    }
+
+    const [rowId] = row;
+
+    if (rowId === undefined) {
+        return null;
+    }
+    
+    return rowId;
+}
+
+function getBaseEmbedMessageResponse() {
+    return new Embed()
+        .setTitle("Only Monk Minecraft")
+        .setColor("#FFD1DC");
+}
+
+function addCoordinateToDb(
+    name: string,
+    coordinate: string,
+    submitted_by: string,
+) {
     const id = v4.generate();
-    db.query('INSERT INTO onlymonk_minecraft_coordinates (id, name, coordinate, submit_by) VALUES (?, ?, ?, ?)',[id, name, coordinate, submitted_by])
+    db.query(
+        "INSERT INTO onlymonk_minecraft_coordinates (id, name, coordinate, submit_by) VALUES (?, ?, ?, ?)",
+        [id, name, coordinate, submitted_by],
+    );
+}
+
+function deleteCoordinateToDbById(rowId: string) {
+    db.query("DELETE FROM onlymonk_minecraft_coordinates WHERE ID = ?", [
+        rowId,
+    ]);
+}
+
+async function isGameServerOnline() {
+    try {
+        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") +
+            config.Minecraft.ApiPaths.Server;
+
+        const response = await fetch(endpoint, {
+            headers: headers,
+        });
+
+        if (!response.ok) {
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error fetching API status:", error);
+        return false;
+    }
+}
+
+async function whoOnline(): Promise<string[]> {
+    try { 
+        
+        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") +
+        config.Minecraft.ApiPaths.Players;
+
+        const response = await fetch(endpoint, {
+            headers: headers,
+        }); 
+        
+        if (!response.ok) { 
+            return [];
+        } 
+        
+        const data = await response.json(); // Extract displayName properties 
+        const displayNames = data.map((item: { displayName: string }) => item.displayName); 
+        console.log("Display Names:", displayNames); 
+
+        return displayNames;
+    } catch (error) { 
+        console.error("Error fetching display names:", error); 
+        return [];
+    }
 }

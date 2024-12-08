@@ -39,8 +39,8 @@ export const onlyMonkCommands: SlashCommandPartial[] = [
         description: "Delete a coordiante",
         options: [
             {
-                name: "coordinate_number",
-                description: "number of coordinate list",
+                name: "index",
+                description: "number of index from list",
                 required: true,
                 type: SlashCommandOptionType.STRING,
             }

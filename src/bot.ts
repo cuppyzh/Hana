@@ -16,11 +16,13 @@ class TagBot extends Client {
   @event()
   ready() {
     console.log(`Logged in as ${this.user?.tag}!`);
+
     onlyMonkCommands.forEach((cmd) => {
-      this.slash.commands.create(cmd, Deno.env.get("SERVER_ID"))
+      this.slash.commands.create(cmd, Deno.env.get("ONLY_MONK_DISCORD_SERVER_ID"))
         .then((c) => console.log(`Created Slash Command ${cmd.name}!`))
         .catch(() => console.log(`Failed to create ${cmd.name} command!`));
     });
+
   }
 
   @slash()
@@ -35,27 +37,32 @@ class TagBot extends Client {
   }
 
   @slash()
-  minecraft_online(i: Interaction) {
-    i.respond({
-      content: `Belom ada anyink`,
-    });
+  async minecraft_online(i: Interaction) {
+    try {
+      i.respond({
+        embeds: await onlyMonkModules.getOnlinePlayerStatus(),
+      });
+    } catch(error){
+      console.error(error)
+    }
   }
 
   @slash()
   minecraft_coordinates(i: Interaction) {
-    i.respond({
-      embeds: onlyMonkModules.getCoordinates(),
-    });
+    try {
+      i.respond({
+        embeds: onlyMonkModules.getCoordinates(),
+      });
+    } catch(error){
+      console.error(error)
+    }
   }
 
   @slash()
   minecraft_add_coordinate(i: Interaction) {
     try {
       let name = i.options.find((e) => e.name == "name")?.value as string;
-      let coordinate = i.options.find((e) => e.name == "coordinate")
-        ?.value as string;
-
-      
+      let coordinate = i.options.find((e) => e.name == "coordinate")?.value as string;
 
       i.respond({
         embeds: onlyMonkModules.addCoordinate(name, coordinate, i.user.id),
@@ -67,11 +74,21 @@ class TagBot extends Client {
 
   @slash()
   minecraft_delete_coordinate(i: Interaction) {
-    i.respond({
-      content: `Belom ada anyink`,
-    });
+    try {
+      let index = i.options.find((e) => e.name == "index")?.value as number;
+
+      i.respond({
+        embeds: onlyMonkModules.deleteCoordinate(index)
+      });
+    } catch(error){
+      console.error(error)
+    }
   }
 }
 
+
+// void main(string[] args)
+onlyMonkModules.InitDatabase();
+
 const bot = new TagBot();
-bot.connect(Deno.env.get("BOT_TOKEN"), Intents.None);
+bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None);
