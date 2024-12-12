@@ -1,5 +1,13 @@
 import { DB, Embed, EmbedField, readJson, serve, v4 } from "../deps.ts";
 
+/*
+    Initialize
+*/
+InitDatabase();
+
+/* 
+    Property::Start
+*/
 const config = await readJson("./OnlyMonkConfig.json");
 
 const headers = new Headers();
@@ -12,7 +20,13 @@ const db = new DB(
     Deno.env.get("ONLY_MONK_MINECRAFT_DATA_PATH") +
         "minecraft.coordinates.sqlite",
 );
+/* 
+    Property::End
+*/
 
+/* 
+    Public Methods::Start
+*/
 export function InitDatabase() {
     db.query(
         `CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`,
@@ -31,7 +45,7 @@ export function getInfo() {
 
     embed.addField({
         name: "Hostname",
-        value: `${Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_ADDRESS")}}`,
+        value: `${Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_ADDRESS")}`,
     });
 
     return [embed];
@@ -139,7 +153,20 @@ export function deleteCoordinate(index: number) {
     return [embed.setDescription("**Coordinate has been deleted! **")];
 }
 
-/* Private Methods */
+export function getErrorEmbedsResponse(){
+    const embed = getBaseEmbedMessageResponse();
+
+    embed.setDescription("Something happened. Hana confused ∘ ∘ ∘ ( °ヮ° ) ?")
+
+    return [embed]
+}
+/* 
+    Public Methods::End
+*/
+
+/* 
+    Private Methods::Start
+*/
 function getCoordinateByIndex(index: number) {
     const [row] = db.query(
         "SELECT ID FROM onlymonk_minecraft_coordinates LIMIT 1 OFFSET ?",
@@ -185,8 +212,7 @@ function deleteCoordinateToDbById(rowId: string) {
 
 async function isGameServerOnline() {
     try {
-        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") +
-            config.Minecraft.ApiPaths.Server;
+        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") + config.Minecraft.ApiPaths.Server;
 
         const response = await fetch(endpoint, {
             headers: headers,
@@ -205,9 +231,7 @@ async function isGameServerOnline() {
 
 async function whoOnline(): Promise<string[]> {
     try { 
-        
-        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") +
-        config.Minecraft.ApiPaths.Players;
+        var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") + config.Minecraft.ApiPaths.Players;
 
         const response = await fetch(endpoint, {
             headers: headers,
@@ -217,7 +241,7 @@ async function whoOnline(): Promise<string[]> {
             return [];
         } 
         
-        const data = await response.json(); // Extract displayName properties 
+        const data = await response.json();
         const displayNames = data.map((item: { displayName: string }) => item.displayName); 
         console.log("Display Names:", displayNames); 
 
@@ -227,3 +251,6 @@ async function whoOnline(): Promise<string[]> {
         return [];
     }
 }
+/* 
+    Private Methods::End
+*/

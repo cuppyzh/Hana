@@ -1,28 +1,46 @@
 import {
   Client,
+  ClientOptions,
   event,
   Intents,
   Interaction,
-  InteractionResponseType,
   slash,
-  SlashCommandPartial,
 } from "./deps.ts";
 
 import { onlyMonkCommands } from "./commands/onlyMonkCommands.ts";
 import * as onlyMonkModules from "./modules/onlyMonkModules.ts";
 import test from "node:test";
 
-class TagBot extends Client {
+interface BotClientOptions extends ClientOptions {
+  syncCommands?: boolean;
+}
+
+class BotClient extends Client {
+  syncCommands: boolean = false;
+
+  constructor(options?: BotClientOptions) {
+    super(options);
+    if (options?.syncCommands === true) this.syncCommands = true;
+  }
+
   @event()
   ready() {
     console.log(`Logged in as ${this.user?.tag}!`);
 
-    onlyMonkCommands.forEach((cmd) => {
-      this.slash.commands.create(cmd, Deno.env.get("ONLY_MONK_DISCORD_SERVER_ID"))
-        .then((c) => console.log(`Created Slash Command ${cmd.name}!`))
-        .catch(() => console.log(`Failed to create ${cmd.name} command!`));
-    });
+    if (!this.syncCommands) {
+      return;
+    }
 
+    console.log(`Syncing commands...`);
+
+    onlyMonkCommands.forEach((cmd) => {
+      this.slash.commands
+        .create(cmd)
+        .then((c) => {
+          console.log(`Created CMD ${cmd.name}!`);
+        })
+        .catch(() => console.log(`Failed to create ${cmd.name}.`));
+    });
   }
 
   @slash()
@@ -33,6 +51,10 @@ class TagBot extends Client {
       });
     } catch (error) {
       console.error(error);
+
+      i.respond({
+        embeds: onlyMonkModules.getErrorEmbedsResponse(),
+      });
     }
   }
 
@@ -42,8 +64,12 @@ class TagBot extends Client {
       i.respond({
         embeds: await onlyMonkModules.getOnlinePlayerStatus(),
       });
-    } catch(error){
-      console.error(error)
+    } catch (error) {
+      console.error(error);
+
+      i.respond({
+        embeds: onlyMonkModules.getErrorEmbedsResponse(),
+      });
     }
   }
 
@@ -53,8 +79,12 @@ class TagBot extends Client {
       i.respond({
         embeds: onlyMonkModules.getCoordinates(),
       });
-    } catch(error){
-      console.error(error)
+    } catch (error) {
+      console.error(error);
+
+      i.respond({
+        embeds: onlyMonkModules.getErrorEmbedsResponse(),
+      });
     }
   }
 
@@ -62,13 +92,18 @@ class TagBot extends Client {
   minecraft_add_coordinate(i: Interaction) {
     try {
       let name = i.options.find((e) => e.name == "name")?.value as string;
-      let coordinate = i.options.find((e) => e.name == "coordinate")?.value as string;
+      let coordinate = i.options.find((e) => e.name == "coordinate")
+        ?.value as string;
 
       i.respond({
         embeds: onlyMonkModules.addCoordinate(name, coordinate, i.user.id),
       });
     } catch (error) {
       console.error(error);
+
+      i.respond({
+        embeds: onlyMonkModules.getErrorEmbedsResponse(),
+      });
     }
   }
 
@@ -78,17 +113,21 @@ class TagBot extends Client {
       let index = i.options.find((e) => e.name == "index")?.value as number;
 
       i.respond({
-        embeds: onlyMonkModules.deleteCoordinate(index)
+        embeds: onlyMonkModules.deleteCoordinate(index),
       });
-    } catch(error){
-      console.error(error)
+    } catch (error) {
+      console.error(error);
+
+      i.respond({
+        embeds: onlyMonkModules.getErrorEmbedsResponse(),
+      });
     }
   }
 }
 
+// -- main progrem --
+const bot = new BotClient({
+  syncCommands: true
+});
 
-// void main(string[] args)
-onlyMonkModules.InitDatabase();
-
-const bot = new TagBot();
 bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None);
