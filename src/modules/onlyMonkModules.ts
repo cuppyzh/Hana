@@ -17,7 +17,7 @@ const database = getFirestore(firebaseApp);
 const coordinatesCollection = collection(database,"onlymonk-mc-coordinates");
 
 // Application Config
-const onlyMonkConfig = await readJson("./OnlyMonkConfig.json");
+const onlyMonkConfig = await readJson(`${Deno.env.get("CONFIG_PATH")}/OnlyMonkConfig.json`);
 const headers = new Headers();
 const apiKey = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_KEY")
     ?.toString();
