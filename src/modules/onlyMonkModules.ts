@@ -1,25 +1,28 @@
-import { DB, Embed, EmbedField, readJson, serve, v4 } from "../deps.ts";
+import { initializeApp, DB, Embed, EmbedField, readJson, serve, v4, collection, getFirestore, addDoc, setDoc, doc, query, where, getDocs, getDoc, deleteDoc } from "../deps.ts";
 
 /*
-    Initialize
-*/
-InitDatabase();
-
-/* 
     Property::Start
 */
-const config = await readJson("./OnlyMonkConfig.json");
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "",
+    authDomain: "onlymonk-mc.firebaseapp.com",
+    projectId: "onlymonk-mc",
+    storageBucket: "onlymonk-mc.firebasestorage.app",
+    messagingSenderId: "767100591581",
+    appId: "1:767100591581:web:00eb709d1a82169283aa34"
+  };
+const firebaseApp = initializeApp(firebaseConfig, "onlymonk-mc-api");
+const database = getFirestore(firebaseApp);
+const coordinatesCollection = collection(database,"onlymonk-mc-coordinates");
 
+// Application Config
+const onlyMonkConfig = await readJson(`${Deno.env.get("CONFIG_PATH")}/OnlyMonkConfig.json`);
 const headers = new Headers();
 const apiKey = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_KEY")
     ?.toString();
 const apiKeyValue: string = apiKey ?? "defaultApiKey";
 headers.append("key", apiKeyValue);
-
-const db = new DB(
-    Deno.env.get("ONLY_MONK_MINECRAFT_DATA_PATH") +
-        "minecraft.coordinates.sqlite",
-);
 /* 
     Property::End
 */
@@ -27,18 +30,12 @@ const db = new DB(
 /* 
     Public Methods::Start
 */
-export function InitDatabase() {
-    db.query(
-        `CREATE TABLE IF NOT EXISTS onlymonk_minecraft_coordinates(id string PRIMARY KEY, name TEXT, coordinate TEXT, submit_by TEXT)`,
-    );
-}
-
-export function getInfo() {
+export async function commandGetInfo() {
     const embed = getBaseEmbedMessageResponse();
 
     embed.addField({
         name: "Server Status",
-        value: "Game Server Status: " + isGameServerOnline()
+        value: "Game Server Status: " + await isGameServerOnline()
             ? "🟢 Online"
             : "❌ Offline",
     });
@@ -51,9 +48,9 @@ export function getInfo() {
     return [embed];
 }
 
-export async function getOnlinePlayerStatus() {
+export async function commandGetOnlinePlayers() {
     const embed = getBaseEmbedMessageResponse();
-    const currentOnlinePlayers = await whoOnline();
+    const currentOnlinePlayers = await getCurrentOnlinePlayers();
 
     if (currentOnlinePlayers.length == 0){
         embed.addField({
@@ -72,10 +69,8 @@ export async function getOnlinePlayerStatus() {
     return [embed]
 }
 
-export function getCoordinates() {
-    const coordinates = [
-        ...db.query(`SELECT * FROM onlymonk_minecraft_coordinates`, []),
-    ];
+export async function commandGetCoordinates() {
+    const coordinates = await getCoordinates();
 
     const embed = getBaseEmbedMessageResponse();
 
@@ -90,12 +85,14 @@ export function getCoordinates() {
     let indexFieldValue = "", nameFieldValue = "", coordinateFieldValue = "";
 
     let index = 1;
-    for (const [id, name, coordinate] of coordinates) {
+
+    coordinates.forEach(element => {
+        
         indexFieldValue += "\n" + index;
-        nameFieldValue += "\n" + name;
-        coordinateFieldValue += "\n" + coordinate;
+        nameFieldValue += "\n" + element.name;
+        coordinateFieldValue += "\n" + element.coordinate;
         index++;
-    }
+    });
 
     embed.addField({
         name: "List of coordinates",
@@ -123,40 +120,42 @@ export function getCoordinates() {
     return [embed];
 }
 
-export function addCoordinate(
-    name: string,
-    coordinate: string,
-    submitted_by: string,
-) {
-    addCoordinateToDb(name, coordinate, submitted_by);
+export async function commandAddCoordinate(name: string, coordinate: string, submitted_by: string) {
+    const embed = getBaseEmbedMessageResponse();
+    const existingCoordinateDocRef = await getCoordinateDocumentByName(name);
 
-    const embed = getBaseEmbedMessageResponse()
-        .setDescription("**Coordinate has been submitted! **");
+    if (existingCoordinateDocRef != null){
+        embed.setDescription("**❌ Coordinate with same name already exists!**");
+        return [embed]
+    }
 
+    addCoordinate(name, coordinate, submitted_by);
+
+    embed.setDescription("**✅ Coordinate has been submitted! **");
     return [embed];
 }
 
-export function deleteCoordinate(index: number) {
+export async function commandDeleteCoordinate(name: string) {
     const embed = getBaseEmbedMessageResponse();
 
-    const rowId = getCoordinateByIndex(index) as string;
+    const existingCoordinateDocRef = await getCoordinateDocumentByName(name);
 
-    if (rowId == null) {
+    if (existingCoordinateDocRef == null) {
         return [
             embed.setDescription(
-                "**Coordinate with such index is not exists.**",
+                "**❌ Coordinate with such index is not exists.**",
             ),
         ];
     }
 
-    deleteCoordinateToDbById(rowId);
-    return [embed.setDescription("**Coordinate has been deleted! **")];
+    await deleteDoc(existingCoordinateDocRef);
+    return [embed.setDescription("**✅ Coordinate has been deleted! **")];
 }
 
 export function getErrorEmbedsResponse(){
     const embed = getBaseEmbedMessageResponse();
 
-    embed.setDescription("Something happened. Hana confused ∘ ∘ ∘ ( °ヮ° ) ?")
+    embed.setDescription("Something happened. Immaa confused ∘ ∘ ∘ ( °ヮ° ) ?")
 
     return [embed]
 }
@@ -167,47 +166,10 @@ export function getErrorEmbedsResponse(){
 /* 
     Private Methods::Start
 */
-function getCoordinateByIndex(index: number) {
-    const [row] = db.query(
-        "SELECT ID FROM onlymonk_minecraft_coordinates LIMIT 1 OFFSET ?",
-        [index - 1],
-    );
-
-    if (row == null || row.length == 0) {
-        return null;
-    }
-
-    const [rowId] = row;
-
-    if (rowId === undefined) {
-        return null;
-    }
-    
-    return rowId;
-}
-
 function getBaseEmbedMessageResponse() {
     return new Embed()
         .setTitle("Only Monk Minecraft")
         .setColor("#FFD1DC");
-}
-
-function addCoordinateToDb(
-    name: string,
-    coordinate: string,
-    submitted_by: string,
-) {
-    const id = v4.generate();
-    db.query(
-        "INSERT INTO onlymonk_minecraft_coordinates (id, name, coordinate, submit_by) VALUES (?, ?, ?, ?)",
-        [id, name, coordinate, submitted_by],
-    );
-}
-
-function deleteCoordinateToDbById(rowId: string) {
-    db.query("DELETE FROM onlymonk_minecraft_coordinates WHERE ID = ?", [
-        rowId,
-    ]);
 }
 
 async function isGameServerOnline() {
@@ -229,7 +191,7 @@ async function isGameServerOnline() {
     }
 }
 
-async function whoOnline(): Promise<string[]> {
+async function getCurrentOnlinePlayers(): Promise<string[]> {
     try { 
         var endpoint = Deno.env.get("ONLY_MONK_MINECRAFT_SERVER_REST_API_ADDRESS") + config.Minecraft.ApiPaths.Players;
 
@@ -251,6 +213,41 @@ async function whoOnline(): Promise<string[]> {
         return [];
     }
 }
+
+async function getCoordinates(){
+    const coordinates = await getDocs(coordinatesCollection);
+    const data = coordinates.docs.map((doc) => doc.data());
+
+    return data;
+}
+
+export async function addCoordinate(name:string, coordinate:string, created_by: string){
+    await addDoc(coordinatesCollection,{
+        "name":name,
+        "coordinate": coordinate,
+        "created_by": created_by
+    });
+
+    return true;
+}
+
+async function getCoordinateDocumentByName(name:string){
+    const q = query(coordinatesCollection, where("name","==", name));
+
+    const document = await getDocs(q).then((querySnapshot) => {
+        const data = querySnapshot.docs.map((doc) => doc);
+        return data[0];
+      });
+
+    if (!document){
+        return null;
+    }
+
+    return document.ref;
+}
 /* 
     Private Methods::End
 */
+
+// await commandGetCoordinates()
+await commandDeleteCoordinate("Main Base")

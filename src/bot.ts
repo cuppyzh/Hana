@@ -44,10 +44,10 @@ class BotClient extends Client {
   }
 
   @slash()
-  minecraft_info(i: Interaction) {
+  async minecraft_info(i: Interaction) {
     try {
       i.respond({
-        embeds: onlyMonkModules.getInfo(),
+        embeds: await onlyMonkModules.commandGetInfo(),
       });
     } catch (error) {
       console.error(error);
@@ -62,7 +62,7 @@ class BotClient extends Client {
   async minecraft_online(i: Interaction) {
     try {
       i.respond({
-        embeds: await onlyMonkModules.getOnlinePlayerStatus(),
+        embeds: await onlyMonkModules.commandGetOnlinePlayers(),
       });
     } catch (error) {
       console.error(error);
@@ -74,10 +74,10 @@ class BotClient extends Client {
   }
 
   @slash()
-  minecraft_coordinates(i: Interaction) {
+  async minecraft_coordinates(i: Interaction) {
     try {
       i.respond({
-        embeds: onlyMonkModules.getCoordinates(),
+        embeds: await onlyMonkModules.commandGetCoordinates(),
       });
     } catch (error) {
       console.error(error);
@@ -89,14 +89,14 @@ class BotClient extends Client {
   }
 
   @slash()
-  minecraft_add_coordinate(i: Interaction) {
+  async minecraft_add_coordinate(i: Interaction) {
     try {
       let name = i.options.find((e) => e.name == "name")?.value as string;
       let coordinate = i.options.find((e) => e.name == "coordinate")
         ?.value as string;
 
       i.respond({
-        embeds: onlyMonkModules.addCoordinate(name, coordinate, i.user.id),
+        embeds: await onlyMonkModules.commandAddCoordinate(name, coordinate, i.user.id),
       });
     } catch (error) {
       console.error(error);
@@ -108,12 +108,12 @@ class BotClient extends Client {
   }
 
   @slash()
-  minecraft_delete_coordinate(i: Interaction) {
+  async minecraft_delete_coordinate(i: Interaction) {
     try {
-      let index = i.options.find((e) => e.name == "index")?.value as number;
+      let name = i.options.find((e) => e.name == "name")?.value as string;
 
       i.respond({
-        embeds: onlyMonkModules.deleteCoordinate(index),
+        embeds: await onlyMonkModules.commandDeleteCoordinate(name),
       });
     } catch (error) {
       console.error(error);
@@ -129,5 +129,4 @@ class BotClient extends Client {
 const bot = new BotClient({
   syncCommands: true
 });
-
-bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None);
+bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None); 
