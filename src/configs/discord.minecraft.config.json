@@ -1,0 +1,12 @@
+{
+    "AllowedServer": [
+        {
+            "Name": "OnlyMonk",
+            "Id": "450679027712262146"
+        },
+        {
+            "Name": "Hana - Dev - Test Server",
+            "Id": "999966626713718805"
+        }
+    ]
+}
