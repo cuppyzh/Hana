@@ -1,10 +1,10 @@
+import type { Interaction } from "https://deno.land/x/harmony@v2.9.1/src/structures/interactions.ts";
 import {
     Client,
     ClientOptions,
     event,
     Intents,
-    Interaction,
-    slash,
+    slash
 } from "./deps.ts";
 import { manageCommands } from "./services/discord/slashCommandServices.ts";
 import { Log } from "./utils/logUtils.ts";
@@ -30,16 +30,23 @@ export class BotClient extends Client {
 
     @event()
     async ready() {
-        Log.Info(`Logged in as ${this.user?.tag}`);
-        Log.Info(`Config 'synCommands': ${this.syncCommands}`);
-        Log.Info(`Config 'resetCommands': ${this.resetCommands}`);
+        Log.info(`Logged in as ${this.user?.tag}`);
+        Log.info(`Config 'synCommands': ${this.syncCommands}`);
+        Log.info(`Config 'resetCommands': ${this.resetCommands}`);
+        Log.info({resetCommands:this.resetCommands});
 
         if (!this.syncCommands) {
             return;
         }
 
-        Log.Info(`Syncing commands...`);
+        Log.info(`Syncing commands...`);
 
         await manageCommands(this, this.resetCommands)
     }
+
+    // @slash() 
+    // minecraft_info(interaction: Interaction) { 
+    //     console.log(`Slash command received: ${interaction}`);
+    //     Log.Info("test")
+    // }
 }

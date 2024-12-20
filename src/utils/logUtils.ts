@@ -11,11 +11,11 @@ class CustomLogging {
     });
   }
 
-  Info(...args: unknown[]) {
+  info(...args: unknown[]) {
     this.logger.info(getCallerMessage(), args);
   }
 
-  Error(...args: unknown[]) {
+  error(...args: unknown[]) {
     this.logger.error(getCallerMessage(), args);
   }
 }

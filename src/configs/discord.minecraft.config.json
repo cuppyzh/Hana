@@ -1,12 +1,22 @@
 {
+    "Endpoints": {
+        "Server": "/v1/server",
+        "Players": "/v1/players"
+    },
     "AllowedServer": [
         {
             "Name": "OnlyMonk",
-            "Id": "450679027712262146"
+            "Id": "450679027712262146",
+            "ServerHostName": "",
+            "RestApiEndpoint": "",
+            "RestApiKey": "pNtqt43FuZIS3JWdmZZtpaArsxh5cgvgekumanQOUBErAZ5U6y5yI7AbMSvt4jlRrp5OOxRWSoWd7IA2LZYqwM6ZaFm5GYu2"
         },
         {
             "Name": "Hana - Dev - Test Server",
-            "Id": "999966626713718805"
+            "Id": "999966626713718805",
+            "ServerHostName": "east-azerbaijan.gl.at.ply.gg:29697",
+            "RestApiEndpoint": "http://give-february.gl.at.ply.gg:32947",
+            "RestApiKey": "pNtqt43FuZIS3JWdmZZtpaArsxh5cgvgekumanQOUBErAZ5U6y5yI7AbMSvt4jlRrp5OOxRWSoWd7IA2LZYqwM6ZaFm5GYu2"
         }
     ]
 }
