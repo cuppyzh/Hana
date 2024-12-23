@@ -6,6 +6,7 @@ export * from "https://deno.land/x/harmony/mod.ts"
 export { v4 } from "https://deno.land/std@0.123.0/uuid/mod.ts";
 export { serve } from "https://deno.land/std@0.123.0/http/server.ts";
 export { readJson } from "https://deno.land/x/jsonfile/mod.ts";
-export { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-export { collection, getFirestore, addDoc, setDoc, doc, query, where, getDocs, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+export { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+export { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+export { collection, getFirestore, addDoc, setDoc, doc, query, where, getDocs, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 

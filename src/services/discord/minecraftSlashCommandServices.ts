@@ -14,13 +14,14 @@ import { minecraftSlashCommands } from "../discord/commands/minecraftSlashComman
 
 import { EventEmitter } from "node:events";
 import { bot } from "../../main.ts";
+import { FirebaseServicesClient } from "../FirebaseServicesClient.ts";
 
 interface AllowedServer {
     Name: string;
     Id: string;
     ServerHostName: string;
     RestApiEndpoint: string;
-    RestApiKey: string;
+    Prefix: string;
 }
 
 const config = await getConfig("discord.minecraft.config");
@@ -193,6 +194,30 @@ myEmitter.on("minecraft_online", async (prop) => {
     }
 });
 
+// event::minecraft_coordinates
+myEmitter.on("minecraft_coordinates", async (prop) => {
+    const message = await getMessage(prop.channelId, prop.messageId);
+    const server = getGuild(prop.guildId);
+    const embed = getBaseMessage(server.Name);
+
+    try {
+        console.log("Collection Name: " + `minecraft_coordinates_${server.Prefix}`);
+        const coordinates = await FirebaseServicesClient.GetDocuments(`minecraft_coordinates_${server.Prefix}`)
+
+        embed.addField({
+            name: "",
+            value: `Coordinates: ${coordinates.length}`,
+        });
+
+        await message.edit({ embeds: [embed] });
+    } catch (error) {
+        Log.error(error);
+        await message.edit({
+            embeds: GetDiscrodInteractionResponseErrorMessage(),
+        });
+    }
+});
+
 function GetDiscrodInteractionResponseErrorMessage(): Embed[] {
     const embed = new Embed()
         .setTitle("Err....")
@@ -320,7 +345,7 @@ async function getCurrentOnlinePlayers(
 
 function getRestHeader(server: AllowedServer) {
     const headers = new Headers();
-    headers.append("key", server.RestApiKey);
+    headers.append("key", Deno.env.get("DISCORD_MINECRAFT_API_KEY_"+server.Prefix) as string);
 
     return headers;
 }

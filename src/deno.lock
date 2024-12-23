@@ -160,6 +160,7 @@
   "redirects": {
     "https://deno.land/x/deno_events/mod.ts": "https://deno.land/x/deno_events@0.1.1/mod.ts",
     "https://deno.land/x/dotenv/load.ts": "https://deno.land/x/dotenv@v3.2.2/load.ts",
+    "https://deno.land/x/dotenv/mod.ts": "https://deno.land/x/dotenv@v3.2.2/mod.ts",
     "https://deno.land/x/harmony/mod.ts": "https://deno.land/x/harmony@v2.9.1/mod.ts",
     "https://deno.land/x/jsonfile/mod.ts": "https://deno.land/x/jsonfile@1.0.0/mod.ts",
     "https://deno.land/x/optic/streams/fileStream/mod.ts": "https://deno.land/x/optic@2.0.1/streams/fileStream/mod.ts",
@@ -512,6 +513,9 @@
     "https://esm.sh/v135/idb@7.1.1/denonext/build/wrap-idb-value.js": "f231e261df597fd330e3eb7adaa289f74d5f27f58b740e6d40da902c5df26c6d",
     "https://esm.sh/v135/idb@7.1.1/denonext/idb.mjs": "2256f557b60289146d39ba59cf27e0fdfab84901ba91d817371d5a2fb0365c1d",
     "https://esm.sh/v135/tslib@2.6.2/denonext/tslib.mjs": "29782bcd3139f77ec063dc5a9385c0fff4a8d0a23b6765c73d9edeb169a04bf1",
+    "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js": "cf972d69ceb91d1245864a8a126cafbfd803f93dd6e367366b73900b5b2bcc77",
+    "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js": "5cf8127201be024e3e5e0f1ff232d262c7b0d337c1e515a2915d15254ce7dd2d",
+    "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js": "1ac03b8f558bbe33413cacbde99219eb3b6c78db36454c6dd54a44ae9bcda1c9",
     "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js": "1bf8ff3370c8cece9a4d59516262b8790c0ef5f7a33c09259ef3f895a70b9a95",
     "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js": "297751665b86ed4738798e1d497c377df2e354593b76ecd878d906f4ce930f11"
   },
