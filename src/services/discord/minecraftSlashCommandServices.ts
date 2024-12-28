@@ -78,15 +78,15 @@ function addCommandHandlers(bot: BotClient, server: AllowedServer) {
     });
 
     bot.slash.commands.slash.handlers.push({
-        name: "minecraft_add_coordinates",
+        name: "minecraft_add_coordinate",
         guild: server.Id,
-        handler: Object.bind(bot),
+        handler: minecraftAddCoordinateHandler.bind(bot),
     });
 
     bot.slash.commands.slash.handlers.push({
-        name: "minecraft_delete_coordinates",
+        name: "minecraft_delete_coordinate",
         guild: server.Id,
-        handler: Object.bind(bot),
+        handler: minecraftDeleteCoordinateHandler.bind(bot),
     });
 }
 
@@ -128,6 +128,53 @@ async function minecraftCoordinatesHandler(i: Interaction) {
         channelId: responseMessage.channelID,
         messageId: responseMessage.id,
     });
+}
+
+async function minecraftAddCoordinateHandler(i: Interaction){
+    try {
+        const server = getGuild(i.guild?.id as string);
+        const embed = getBaseMessage(server.Name);
+
+        const name = i.options.find((e) => e.name == "name")?.value as string;
+        const doc = {
+            "X": i.options.find((e) => e.name == "xcoordinate")?.value,
+            "Y": i.options.find((e) => e.name == "ycoordinate")?.value as string,
+            "Z": i.options.find((e) => e.name == "zcoordinate")?.value as string
+        }
+
+        await FirebaseServicesClient.AddDocument(`minecraft_coordinates_${server.Prefix}`, name, doc)
+
+        i.respond({
+            embeds: [embed.setDescription("**✅ Coordinate has been submitted! **")]
+        })
+    } catch(error){
+        i.respond({
+            embeds: GetDiscrodInteractionResponseErrorMessage(),
+        });
+
+        console.log(error)
+    }
+}
+
+async function minecraftDeleteCoordinateHandler(i: Interaction){
+    try {
+        const server = getGuild(i.guild?.id as string);
+        const embed = getBaseMessage(server.Name);
+
+        const name = i.options.find((e) => e.name == "name")?.value as string;
+
+        await FirebaseServicesClient.DeleteDocument(`minecraft_coordinates_${server.Prefix}`, name)
+
+        i.respond({
+            embeds: [embed.setDescription("**✅ Coordinate has been deleted! **")]
+        })
+    } catch(error){
+        i.respond({
+            embeds: GetDiscrodInteractionResponseErrorMessage(),
+        });
+
+        console.log(error)
+    }
 }
 
 // Event Handler
@@ -204,9 +251,44 @@ myEmitter.on("minecraft_coordinates", async (prop) => {
         console.log("Collection Name: " + `minecraft_coordinates_${server.Prefix}`);
         const coordinates = await FirebaseServicesClient.GetDocuments(`minecraft_coordinates_${server.Prefix}`)
 
+        let indexFieldValue = "", nameFieldValue = "", coordinateFieldValue = "";
+
+        let index = 1;
+
+        coordinates.forEach(element => {
+            indexFieldValue += "\n" + index;
+            nameFieldValue += "\n" + element.id;
+
+            if (element.Y){
+                coordinateFieldValue += "\n" + element.X +" "+ element.Y + " " + element.Z;
+            } else {
+                coordinateFieldValue += "\n" + element.X +" ~ " + element.Z;
+            }
+
+            index++;
+        });
+
         embed.addField({
-            name: "",
-            value: `Coordinates: ${coordinates.length}`,
+            name: "List of coordinates",
+            value: "",
+        });
+    
+        embed.addField({
+            name: "Index",
+            value: indexFieldValue,
+            inline: true,
+        });
+    
+        embed.addField({
+            name: "Name",
+            value: nameFieldValue,
+            inline: true,
+        });
+    
+        embed.addField({
+            name: "Coordinate",
+            value: coordinateFieldValue,
+            inline: true,
         });
 
         await message.edit({ embeds: [embed] });
@@ -327,7 +409,7 @@ async function getCurrentOnlinePlayers(
 
         const data = await response.json();
 
-        if (!Object.prototype.hasOwnProperty.call(data, "displayName")) {
+        if (data.length == 0) {
             return [];
         }
 

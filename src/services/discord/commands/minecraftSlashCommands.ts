@@ -27,11 +27,23 @@ export const minecraftSlashCommands: SlashCommandPartial[] = [
                 type: SlashCommandOptionType.STRING,
             },
             {
-                name: "coordinate",
-                description: "Coordinate X,Y,Z",
+                name: "xcoordinate",
+                description: "X Coordinate",
                 required: true,
                 type: SlashCommandOptionType.STRING,
             },
+            {
+                name: "ycoordinate",
+                description: "Y Coordinate",
+                required: true,
+                type: SlashCommandOptionType.STRING,
+            },
+            {
+                name: "zcoordinate",
+                description: "Z Coordinate",
+                required: true,
+                type: SlashCommandOptionType.STRING,
+            }
         ],
     },
     {

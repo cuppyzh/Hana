@@ -1,4 +1,4 @@
-import { collection, getAuth, getDocs, getFirestore, initializeApp, signInWithEmailAndPassword } from "../deps.ts";
+import { addDoc, collection, DB, deleteDoc, doc, getAuth, getDocs, getFirestore, initializeApp, setDoc, signInWithEmailAndPassword } from "../deps.ts";
 
 class FirebaseServices{
     firebaseConfig?: JSON;
@@ -24,6 +24,26 @@ class FirebaseServices{
         const docs = await getDocs(firestoreCollection);
         const data = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         return data;
+    }
+
+    async AddDocument(collectionName:string, documentId:string, document:object){
+        await signInWithEmailAndPassword(
+            this.auth,
+            Deno.env.get("FIREBASE_AUTH_EMAIL") as string,
+            Deno.env.get("FIREBASE_AUTH_PASSWORD") as string,
+          );
+        const docRef = doc(this.database, collectionName, documentId);
+        await setDoc(docRef, document)
+    }
+
+    async DeleteDocument(collectionName:string, documentId:string){
+        await signInWithEmailAndPassword(
+            this.auth,
+            Deno.env.get("FIREBASE_AUTH_EMAIL") as string,
+            Deno.env.get("FIREBASE_AUTH_PASSWORD") as string,
+          );
+        const docRef = doc(this.database, collectionName, documentId); 
+        await deleteDoc(docRef)
     }
 }
 
