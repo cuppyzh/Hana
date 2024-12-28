@@ -1,132 +1,52 @@
+import type { Interaction } from "https://deno.land/x/harmony@v2.9.1/src/structures/interactions.ts";
 import {
-  Client,
-  ClientOptions,
-  event,
-  Intents,
-  Interaction,
-  slash,
+    Client,
+    ClientOptions,
+    event,
+    Intents,
+    slash
 } from "./deps.ts";
+import { manageCommands } from "./services/discord/slashCommandServices.ts";
+import { Log } from "./utils/logUtils.ts";
 
-import { onlyMonkCommands } from "./commands/onlyMonkCommands.ts";
-import * as onlyMonkModules from "./modules/onlyMonkModules.ts";
-import test from "node:test";
-
-interface BotClientOptions extends ClientOptions {
-  syncCommands?: boolean;
+export interface BotClientOptions extends ClientOptions {
+    syncCommands?: boolean;
+    resetCommands?: boolean;
 }
 
-class BotClient extends Client {
-  syncCommands: boolean = false;
+export class BotClient extends Client {
+    syncCommands: boolean = false;
+    resetCommands: boolean = false;
 
-  constructor(options?: BotClientOptions) {
-    super(options);
-    if (options?.syncCommands === true) this.syncCommands = true;
-  }
-
-  @event()
-  ready() {
-    console.log(`Logged in as ${this.user?.tag}!`);
-
-    if (!this.syncCommands) {
-      return;
+    constructor(options?: BotClientOptions) {
+        super(options);
+        if (options?.syncCommands === true) this.syncCommands = true;
+        if (options?.resetCommands === true) this.resetCommands = true;
     }
 
-    console.log(`Syncing commands...`);
-
-    onlyMonkCommands.forEach((cmd) => {
-      this.slash.commands
-        .create(cmd)
-        .then((c) => {
-          console.log(`Created CMD ${cmd.name}!`);
-        })
-        .catch(() => console.log(`Failed to create ${cmd.name}.`));
-    });
-  }
-
-  @slash()
-  async minecraft_info(i: Interaction) {
-    try {
-      i.respond({
-        embeds: await onlyMonkModules.commandGetInfo(),
-      });
-    } catch (error) {
-      console.error(error);
-
-      i.respond({
-        embeds: onlyMonkModules.getErrorEmbedsResponse(),
-      });
+    start() {
+        this.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None);
     }
-  }
 
-  @slash()
-  async minecraft_online(i: Interaction) {
-    try {
-      i.respond({
-        embeds: await onlyMonkModules.commandGetOnlinePlayers(),
-      });
-    } catch (error) {
-      console.error(error);
+    @event()
+    async ready() {
+        Log.info(`Logged in as ${this.user?.tag}`);
+        Log.info(`Config 'synCommands': ${this.syncCommands}`);
+        Log.info(`Config 'resetCommands': ${this.resetCommands}`);
+        Log.info({resetCommands:this.resetCommands});
 
-      i.respond({
-        embeds: onlyMonkModules.getErrorEmbedsResponse(),
-      });
+        if (!this.syncCommands) {
+            return;
+        }
+
+        Log.info(`Syncing commands...`);
+
+        await manageCommands(this, this.resetCommands)
     }
-  }
 
-  @slash()
-  async minecraft_coordinates(i: Interaction) {
-    try {
-      i.respond({
-        embeds: await onlyMonkModules.commandGetCoordinates(),
-      });
-    } catch (error) {
-      console.error(error);
-
-      i.respond({
-        embeds: onlyMonkModules.getErrorEmbedsResponse(),
-      });
-    }
-  }
-
-  @slash()
-  async minecraft_add_coordinate(i: Interaction) {
-    try {
-      let name = i.options.find((e) => e.name == "name")?.value as string;
-      let coordinate = i.options.find((e) => e.name == "coordinate")
-        ?.value as string;
-
-      i.respond({
-        embeds: await onlyMonkModules.commandAddCoordinate(name, coordinate, i.user.id),
-      });
-    } catch (error) {
-      console.error(error);
-
-      i.respond({
-        embeds: onlyMonkModules.getErrorEmbedsResponse(),
-      });
-    }
-  }
-
-  @slash()
-  async minecraft_delete_coordinate(i: Interaction) {
-    try {
-      let name = i.options.find((e) => e.name == "name")?.value as string;
-
-      i.respond({
-        embeds: await onlyMonkModules.commandDeleteCoordinate(name),
-      });
-    } catch (error) {
-      console.error(error);
-
-      i.respond({
-        embeds: onlyMonkModules.getErrorEmbedsResponse(),
-      });
-    }
-  }
+    // @slash() 
+    // minecraft_info(interaction: Interaction) { 
+    //     console.log(`Slash command received: ${interaction}`);
+    //     Log.Info("test")
+    // }
 }
-
-// -- main progrem --
-const bot = new BotClient({
-  syncCommands: true
-});
-bot.connect(Deno.env.get("DISCORD_BOT_TOKEN"), Intents.None); 

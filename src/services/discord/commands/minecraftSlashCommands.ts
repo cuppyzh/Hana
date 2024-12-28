@@ -1,6 +1,6 @@
-import { SlashCommandOptionType, SlashCommandPartial } from "../deps.ts";
+import { SlashCommandOptionType, SlashCommandPartial } from "../../../deps.ts";
 
-export const onlyMonkCommands: SlashCommandPartial[] = [
+export const minecraftSlashCommands: SlashCommandPartial[] = [
     {
         name: "minecraft_info",
         description: "Important information for the server",
@@ -27,11 +27,23 @@ export const onlyMonkCommands: SlashCommandPartial[] = [
                 type: SlashCommandOptionType.STRING,
             },
             {
-                name: "coordinate",
-                description: "Coordinate X,Y,Z",
+                name: "xcoordinate",
+                description: "X Coordinate",
                 required: true,
                 type: SlashCommandOptionType.STRING,
             },
+            {
+                name: "ycoordinate",
+                description: "Y Coordinate",
+                required: true,
+                type: SlashCommandOptionType.STRING,
+            },
+            {
+                name: "zcoordinate",
+                description: "Z Coordinate",
+                required: true,
+                type: SlashCommandOptionType.STRING,
+            }
         ],
     },
     {
